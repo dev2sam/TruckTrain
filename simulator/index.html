@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            padding: 2em;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        .trainWrapper {
+            width: 100%;
+            margin-bottom: 2em;
+        }
+
+        .train {
+            width: fit-content;
+        }
+
+        .train p {
+            font-weight: 600;
+            font-size: 1.2em;
+            margin-bottom: 0.2em;
+        }
+
+        .train svg {
+            font-size: 2.4em;
+        }
+
+        progress {
+            width: 100%;
+        }
+
+        .path {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        #simulate {
+            background-color: #4CAF50;
+            /* Green */
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 12px;
+            box-shadow: 0 4px #999;
+            margin-bottom: 2em;
+        }
+
+        #simulate:hover {
+            background-color: #45a049;
+        }
+
+        #simulate:active {
+            background-color: #3e8e41;
+            box-shadow: 0 2px #666;
+            transform: translateY(4px);
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <button id="simulate">Play Simulation</button>
+    <div class="trains"></div>
+
+    <!-- https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js -->
+    <script src="https://trucktrainapi.5amsystems.com/socket.io/socket.io.js"></script>
+    <script>
+        // for sockets
+        const socket = io('https://trucktrainapi.5amsystems.com');
+
+        socket.auth = { username: "simulator", sessionID: `${Date.now()}`, id: `${Date.now()}` };
+        socket.connect();
+
+        function updateLiveData(id, coordinates, distanceCovered, speed) {
+            socket.emit('update-live-data-to-driver', {
+                train_ID: id,
+                distanceCovered: distanceCovered,
+                coordinates: coordinates,
+                speed: speed
+            });
+        }
+
+        // for other functions
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function calculateTotalDistance(path) {
+            let totalDistance = 0;
+            for (let i = 0; i < path.length - 1; i++) {
+                totalDistance += calculateDistance(path[i], path[i + 1]);
+            }
+            return totalDistance;
+        }
+
+        function calculateDistance(point1, point2) {
+            const [x1, y1] = point1;
+            const [x2, y2] = point2;
+            return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        }
+
+        async function getRouteDetails(route_id) {
+            try {
+                const response = await fetch('https://trucktrainapi.5amsystems.com/getRouteDetails', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ id: route_id })
+                });
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                return data[0];
+            } catch (error) {
+                console.log("Error occurred: ", error);
+                throw error;
+            }
+        }
+
+        async function createPath(routeDetails) {
+
+            let path = [];
+
+            // Add route origin and destination to the path
+            path.push(routeDetails.Origin.coordinates);
+            path.push(routeDetails.Destination.coordinates);
+
+            // Add gradients to the path
+            routeDetails.gradients.forEach(gradient => {
+                path.push(gradient.coordinates_from, gradient.coordinates_to);
+            });
+
+            // Add curvatures to the path
+            routeDetails.curvatures.forEach(curvature => {
+                path.push(curvature.coordinates_from, curvature.coordinates_to);
+            });
+
+            // Add points switches to the path
+            routeDetails.points_switches.forEach(switchPoint => {
+                path.push(switchPoint.coordinates);
+            });
+
+            // Add signal crossings to the path
+            routeDetails.signalCrossings.forEach(signalCrossing => {
+                path.push(signalCrossing.coordinates);
+            });
+
+            // arrange the coordinates in path in order (starting from origin, ending at destination, Sort the path array based on distance from origin)
+            path.sort((a, b) => {
+                // Calculate the distance of points 'a' and 'b' from the origin
+                const distanceA = calculateDistance(routeDetails.Origin.coordinates, a);
+                const distanceB = calculateDistance(routeDetails.Origin.coordinates, b);
+                return distanceA - distanceB;
+            });
+
+            return path;
+        }
+
+        async function updateTrainCoordinates(id, coordinates) {
+            await fetch('https://trucktrainapi.5amsystems.com/updateTrainCoordinates', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id, coordinates: coordinates })
+            });
+        }
+
+        async function updateTrainSpeed(id, speed) {
+            await fetch('https://trucktrainapi.5amsystems.com/updateTrainSpeed', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id, speed: speed })
+            });
+        }
+
+        let earliestDepartureTime;
+        let orderOfTrains = [];
+
+        async function startTrainSimulation() {
+
+            // Find the earliest departure time among all trains
+            earliestDepartureTime = await Math.min(...trains.map(train => train.Departure_time));
+
+            // Start all train simulations simultaneously
+            await Promise.all(trains.map(async train => {
+                await simulateTrainMovement(train);
+            }));
+        }
+
+        async function simulateTrainMovement(train) {
+            const routeDetails = await getRouteDetails(train.Operating_route_ID);
+            const path = await createPath(routeDetails);
+
+            // Initialize speed parameters
+            let currentSpeed = 0;
+            const accelerationRate = 1.5; // Adjust as needed
+            const maxSpeed = routeDetails.Normal_running_speed;
+
+            // Calculate total distance of the path
+            const totalDistance = calculateTotalDistance(path);
+
+            // Initialize distance covered and percentage
+            let distanceCovered = 0;
+            let percentageCovered = 0;
+
+            // Calculate relative departure time difference
+            const relativeDepartureTime = (train.Departure_time - earliestDepartureTime) / 1000; // Convert to seconds
+
+            // Wait for relative departure time
+            await sleep(relativeDepartureTime * 1000); // Convert to milliseconds
+
+            // Simulate train movement along the path
+            for (let i = 0; i < path.length - 1; i++) {
+                const start = path[i];
+                const end = path[i + 1];
+                const distance = calculateDistance(start, end);
+
+                const startDecreasingAt = 1
+                const remainingDistance = totalDistance - distanceCovered;
+                if (remainingDistance > startDecreasingAt) {
+                    // Gradually increase speed to reach normal running speed
+                    while (currentSpeed < maxSpeed) {
+                        currentSpeed += accelerationRate;
+
+                        // Update percentage covered
+                        percentageCovered = (distanceCovered / totalDistance) * 100;
+
+                        // Update progress bar
+                        document.getElementById(`${train.Train_ID}path`).value = percentageCovered;
+
+                        // Update train coordinates and speed
+                        updateLiveData(train.Train_ID, end, percentageCovered, currentSpeed);
+
+                        // Log progress
+                        console.log(`Train ${train.Train_ID} is at: ${end}, Distance Covered: ${distanceCovered.toFixed(2)} miles, Percentage Covered: ${percentageCovered.toFixed(2)}%`);
+
+                        await sleep(100); // Adjust as needed for smooth acceleration
+
+                        // Calculate distance covered
+                        distanceCovered += (currentSpeed / 3600) * 0.1; // Convert speed from mph to miles per second and multiply by time elapsed (100 ms)
+                    }
+                }
+
+                // Gradually decrease speed towards the end
+                if (remainingDistance <= startDecreasingAt) {
+                    currentSpeed -= 22; // Adjust current speed based on deceleration rate
+
+                    // Ensure currentSpeed doesn't go below 0
+                    if (currentSpeed < 0) {
+                        currentSpeed = 0;
+                    }
+                } else {
+                    // Reset currentSpeed to maxSpeed
+                    currentSpeed = maxSpeed;
+                }
+
+                // Calculate time to travel the current segment
+                const timeToTravel = distance / currentSpeed;
+
+                // Simulate movement along the segment
+                distanceCovered += distance;
+
+                // Update percentage covered
+                percentageCovered = (distanceCovered / totalDistance) * 100;
+
+                // Update progress bar
+                document.getElementById(`${train.Train_ID}path`).value = percentageCovered;
+
+                // Update train coordinates and speed
+                updateLiveData(train.Train_ID, end, percentageCovered, currentSpeed);
+
+                // Log progress
+                console.log(`Train ${train.Train_ID} is at: ${end}, Distance Covered: ${distanceCovered.toFixed(2)} miles, Percentage Covered: ${percentageCovered.toFixed(2)}%`);
+
+                // Sleep for the calculated time
+                await sleep(timeToTravel * 200000); // 500000 for smooth acceleration
+            }
+
+            console.log(`Train ${train.Train_ID} reached its destination.`);
+        }
+
+
+        // fetch all trains
+        let trains;
+        async function fetchTrains() {
+            await fetch('https://trucktrainapi.5amsystems.com/fetchAllTrains')
+                .then(res => {
+                    if (!res.ok) throw new Error('Network response was not ok');
+                    return res.json();
+                })
+                .then(data => {
+                    trains = data;
+
+                    data.forEach(train => {
+                        document.querySelector('.trains').innerHTML +=
+                            `
+                    <div class="trainWrapper">
+                        <div class="train">
+                            <p>${train.Train_ID}</p>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 32 32">
+                                <path fill="currentColor"
+                                    d="M30 25H2v2h2v2h2v-2h5v2h2v-2h5v2h2v-2h5v2h2v-2h3zM8 16H2v-2h6v-2H2v-2h6a2.002 2.002 0 0 1 2 2v2a2.002 2.002 0 0 1-2 2" />
+                                <path fill="currentColor"
+                                    d="m28.55 14.23l-8.58-7.864A8.978 8.978 0 0 0 13.888 4H2v2h10v4a2.002 2.002 0 0 0 2 2h9.157l4.041 3.705A2.472 2.472 0 0 1 25.528 20H2v2h23.527a4.473 4.473 0 0 0 3.023-7.77M14 10V6.005a6.977 6.977 0 0 1 4.618 1.835L20.975 10Z" />
+                            </svg>
+                        </div>
+                        <progress id="${train.Train_ID}path" value="0" min="0" max="100"></progress>
+                        <div class="path">
+                            <p>${train.Origin_station}</p>
+                            <p>${train.Destination_station}</p>
+                        </div>
+                    </div>
+                    `
+                    })
+                })
+                .catch(err => {
+                    console.log("Error occurred: ", err)
+                })
+        }
+        fetchTrains();
+
+        document.getElementById("simulate").addEventListener('click', () => {
+            startTrainSimulation();
+        })
+    </script>
+
+</body>
+
+</html>

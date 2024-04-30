@@ -1,0 +1,351 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800;900&family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+/* initializing */
+:root {
+    color-scheme: light only;
+    --poppins: 'Poppins', sans-serif;
+    --montserrat: 'Montserrat', sans-serif;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    font: inherit;
+}
+
+html {
+    font-family: var(--poppins);
+    scroll-behavior: smooth;
+    font-size: 1.1vw;
+}
+
+body {
+    font-family: var(--poppins);
+    color: #000;
+    overflow-x: hidden;
+    min-height: 100vh;
+    background: #fff;
+}
+
+/* width */
+body::-webkit-scrollbar {
+    width: 10px;
+    scrollbar-width: thin;
+}
+
+/* Track */
+body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+/* Handle */
+body::-webkit-scrollbar-thumb {
+    background: #888;
+}
+
+/* Handle on hover */
+body::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+img,
+picture,
+svg,
+video {
+    display: block;
+    max-width: 100%;
+}
+
+input,
+textarea,
+button,
+select,
+option {
+    font-family: var(--poppins);
+    border: none;
+    outline: none;
+}
+
+
+button {
+    cursor: pointer;
+    background: none;
+    border: none;
+    outline: none;
+    cursor: pointer;
+}
+
+a {
+    text-decoration: none;
+    width: fit-content;
+    color: inherit;
+}
+
+i {
+    display: flex;
+}
+
+ul {
+    padding-left: 1em;
+}
+
+/* core styles */
+section {
+    background: #f5f6f7;
+    width: 100%;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 0.2fr 0.8fr;
+    padding: 1em;
+    overflow: hidden;
+}
+
+.sideBar {
+    padding: 1em;
+    height: 100%;
+    overflow: hidden;
+}
+
+.mainWindow {
+    padding: 1em;
+    height: 100%;
+    overflow: hidden;
+}
+
+.block {
+    overflow: hidden;
+    background: #fff;
+    border-radius: 0.3em;
+    box-shadow: 0px 4px 5.3px 0px rgba(0, 0, 0, 0.25);
+    padding: 1em;
+    height: fit-content;
+}
+
+.block h2 {
+    font-size: 1em;
+    font-weight: 500;
+    color: #000;
+    margin-bottom: 1em;
+}
+
+.profile.block {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.profile .top .profileImg img {
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 50%;
+    border: 2px solid rgb(224, 224, 224);
+    width: 80%;
+    margin: auto;
+}
+
+.profile .top .profileInfo {
+    margin-top: 2em;
+}
+
+.profile .top .profileInfo .info {
+    margin-bottom: 1em;
+}
+
+.profile .top .profileInfo .info p.title {
+    font-size: 0.8em;
+}
+
+.profile .top .profileInfo .info p.value {
+    font-size: 1em;
+}
+
+.profile .bottom button {
+    width: 100%;
+    background: #ffebeb;
+    color: #d11c1c;
+    border-radius: 0.3em;
+    font-size: 1em;
+    padding: 0.5em;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.mainWindow .routeInfo {
+    margin-bottom: 2em;
+}
+
+.mainWindow .routeInfo li {
+    margin-bottom: 1em;
+    font-size: 1em;
+    color: #000;
+}
+
+.mainWindow .otherInfo {
+    display: flex;
+    height: fit-content;
+    width: 100%;
+}
+
+.mainWindow .otherInfo .weatherInfo {
+    margin-right: 2em;
+}
+
+.mainWindow .otherInfo .weatherInfo .wrapper {
+    display: flex;
+    align-items: center;
+    margin-top: 1.2em;
+    padding: 1em 2em;
+}
+
+.mainWindow .otherInfo .weatherInfo .wrapper .icon {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-right: 2em;
+}
+
+.mainWindow .otherInfo .weatherInfo .wrapper .icon i {
+    font-size: 5em;
+}
+
+.mainWindow .otherInfo .weatherInfo .wrapper .icon img {
+    width: 5em;
+}
+
+.mainWindow .otherInfo .weatherInfo .wrapper .icon p {
+    font-size: 1.2em;
+    margin-top: 0.5em;
+}
+
+.mainWindow .otherInfo .weatherInfo .wrapper .wDetails p {
+    font-size: 0.9em;
+    margin-bottom: 0.5em;
+}
+
+.mainWindow .otherInfo .trainInfo {
+    flex: 1;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper {
+    display: grid;
+    grid-template-columns: 1fr;
+    /* grid-template-columns: 1.5fr 1fr; */
+    grid-column-gap: 1em;
+    padding-top: 0.5em;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .tInfo {
+    /* border-right: 2px solid #cacaca; */
+    padding-right: 1em;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .tInfo .row {
+    width: 100%;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .tInfo .row.iconRow {
+    display: flex;
+    margin-bottom: 2em;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .tInfo .row.iconRow .icon {
+    margin-right: 1em;
+    display: flex;
+    font-size: 1.5em;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .tInfo .row.iconRow .icon i {
+    margin-right: 0.3em;
+    margin-top: 0.2em;
+}
+
+
+.mainWindow .otherInfo .trainInfo .wrapper .tInfo .row.timesRow .times {
+    display: flex;
+    justify-content: space-between;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .tInfo .row.timesRow .times p.title {
+    font-size: 0.7em;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .tInfo .row.timesRow .times p.value {
+    font-size: 1.2em;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .tInfo .row.timesRow .distProgress {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5em 4em 0.5em 0em;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .tInfo .row.timesRow .distProgress span {
+    display: block;
+    border-radius: 50%;
+    width: 0.8em;
+    height: 0.8em;
+    background: #000;
+    margin: 0.4em;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .tInfo .row.timesRow .distProgress progress {
+    flex: 1;
+    height: 9px;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .tInfo .row.timesRow .stations {
+    display: flex;
+    justify-content: space-between;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .tInfo .row.timesRow .stations p.title {
+    font-size: 0.7em;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .tInfo .row.timesRow .stations p.value {
+    font-size: 1.2em;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .tInfo .row.timesRow .distProgress {
+    display: flex;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .tInfo .row.timesRow .stations {
+    display: flex;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .otherTrains {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-column-gap: 1em;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .otherTrains .col p {
+    font-size: 1em;
+    font-weight: 600;
+    margin-bottom: 0.5em;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .otherTrains .col ul {
+    list-style: none;
+    padding-left: 0em;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .otherTrains .col ul li {
+    font-size: 1.1em;
+    margin-bottom: 0.5em;
+}
+
+.mainWindow .otherInfo .trainInfo .wrapper .otherTrains .col ul li span {
+    font-size: 0.7em;
+}
